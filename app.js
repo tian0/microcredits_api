@@ -1,6 +1,7 @@
 let express = require("express")
 let bodyParser = require("body-parser") //manage info received en formato JSON
 let userRouter = require("./routes/user.router.js")
+let creditsRouter = require("./routes/credits.router.js")
 
 let app = express() //crear config de express para app
 
@@ -18,6 +19,11 @@ app.use("/users/create", userRouter) //POST is declared in router
 app.use("/users/delete", userRouter) //DELETE is declared in router
 app.use("/users/update", userRouter) //UPDATE is declared in router
 
+//Config routes for credits management
+app.use("/credits", creditsRouter) //GET is declared in router
+app.use("/credits/create", creditsRouter) //POST is declared in router
+app.use("/credits/delete", creditsRouter) //DELETE is declared in router
+app.use("/credits/update", creditsRouter) //UPDATE is declared in router
 
 
 module.exports = app

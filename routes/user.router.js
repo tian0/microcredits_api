@@ -10,11 +10,11 @@ userRouter
         res.send('Respuesta desde userrouter para test function')
     })
 
-    .post('/create', userCtr.createUsers)
+    .post('/create', userCtr.find, userCtr.createUsers) //executes find middleware first to validate user can be created, next is createUsers
 
-    .delete('/delete', userCtr.deleteUsers)
+    .delete('/delete/:_id', userCtr.deleteUsers) // /:id becomes /1 in url for id:1
 
-    .put('/update', userCtr.updateUsers)
+    .put('/update/:_id', userCtr.updateUsers)
     
 // .get('/all', (req, res) => {
 //     res.send('Respuesta desde userrouter para test function')
