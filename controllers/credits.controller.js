@@ -10,7 +10,7 @@ const getAllCredits = async (req, res) => {
     // console.log("getAllCredits()", DB.connection);
     DB.connect()
 
-    await Credit.find()
+    await Credit.find().populate('usuario').exec()
         .then((response) => {
             console.log(response);
             res.status(201).send({ "Credits": response, "status": 201 })
