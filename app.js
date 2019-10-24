@@ -2,11 +2,22 @@ let express = require("express")
 let bodyParser = require("body-parser") //manage info received en formato JSON
 let userRouter = require("./routes/user.router.js")
 let creditsRouter = require("./routes/credits.router.js")
+let cookieParser = require('cookie-parser')
+let cookieSession = require('cookie-session')
 
 let app = express() //crear config de express para app
 
+
 //Receive info in JSON format
 app.use(bodyParser.json())
+
+//Activate use of cookies
+app.use(cookieParser())
+
+//Activate use of session
+app.use(cookieSession({
+    secret: "aleatorio"
+}))
 
 //Config main rout to server
 app.get("/", (req,res)=>{

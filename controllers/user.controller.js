@@ -1,6 +1,8 @@
 let mongoose = require("mongoose") //libreria para interactuar con MongoDB
 let User = require("../models/user.model") //permite interaccion fon info de DB
 let DB = require("../config/database")
+let bcrypt = require('bcrypt');
+let jwt = require('jsonwebtoken')
 
 //Connection to DB is left open with this method, see config/database.js and config.js for proper open-close method
 // let connectionString = "mongodb://app:1234@localhost:27017/microcredits_db" //mongodb://user:pwd@localhost...
@@ -29,6 +31,43 @@ const getAllUsers = async (req, res) => {
     DB.disconnect()
 }
 
+//Middleware login
+const login = async (req, res, next) => {
+    console.log("User", req.body.email)
+
+    // const email = req.body.email;
+    // const clave = req.body.clave;
+    DB.connect()
+
+    //Validate user login
+    await User.findOne({ "email": req.body.email })
+        .then(async (response) => { //response is User model, contains clave
+            console.log("Token in DB: ", response.clave);
+
+            //Compare DB hashed clave with bcrypt hash of input clave
+            await bcrypt.compare(req.body.clave, response.clave)
+                .then((status) => {
+                    console.log(status);
+                    if (status) {
+                        jwt.sign({ "id": "12345" }, req.body.clave, (err, token) => {
+                            console.log("token: ", token);
+                            console.log("****SESSION****", req.session);
+                            res.cookie("token", token)
+                            res.status(200).send({"token": token})
+                        })
+                    }
+                })
+                .catch((err) => {
+                    console.log(err);
+                })
+        })
+        .catch((error) => {
+            console.log("error: ", error);
+        })
+
+    DB.disconnect()
+};
+
 //Create Middleware - to find user if it already exists before creating new one
 const find = (req, res, next) => {
     DB.connect()
@@ -36,8 +75,7 @@ const find = (req, res, next) => {
     // modelo User() que se conecta con Mongo via mongoose such that, db.user.findOne() = newUser.findOne()
     User.findOne({ cedula: req.body.cedula }) //
         .then((response) => {
-            console.log("user exists?", response); //No se puede crear mismo usuario, ya existe
-
+            // console.log("user exists?", response); //No se puede crear mismo usuario, ya existe
             //If response is null, the user already exists
             if (response !== null) {
                 console.log('throwing at find, user exists');
@@ -45,7 +83,7 @@ const find = (req, res, next) => {
                 // res.status(500).send(`<h1>User already exists</h1>`) //printing json format
             }
             else {
-                console.log('going to next()');
+                console.log('going to next() in find');
                 next() //next function in user.router is createUser, it executes if find user is null
             }
 
@@ -58,15 +96,25 @@ const find = (req, res, next) => {
 
         })
 }
+
+//Middleware to encrypt password for DB entry of hash only
+const generateHash = async (req, res, next) => {
+    // console.log("GENERATE HASH: ", clave)
+    await bcrypt.hash(req.body.clave, 10).then(function (hash) {
+        req.body.clave = hash
+        console.log("Contrasena encryptada en DB con hash:", hash)
+
+        next()      //next function is declared in router, in this case createUser
+    })
+}
+
 const createUsers = async (req, res) => {
-    //DB is already open from middleware find()
-
+    //DB is already open from first middleware find()
     // console.log("createUser", req.body);
-
     let newUser = new User(req.body)
     await newUser.save()
         .then((response) => {
-            console.log("createUsers response", response);
+            // console.log("createUsers response", response);
             res.status(201).send({ "mensaje": "correcto", "status": 201 }) //printing json format
             // res.status(201).send(`<h1>Mensaje Correcto</h1>`)
 
@@ -114,7 +162,7 @@ const deleteUsers = async (req, res) => { //have async elements within function 
         .then(async (userFound) => {
             //Delete User
             await userFound.remove() //moongoose functions are promises as db is accessed
-            //await removal before continuing to response and disconnect DB, if not awaited DB may disconnect before removal promise received
+                //await removal before continuing to response and disconnect DB, if not awaited DB may disconnect before removal promise received
                 .then((userDeleted) => {
                     console.log("response", userDeleted);
                     res.status(200).send({ "message": "User deleted" })
@@ -212,5 +260,7 @@ module.exports = {
     createUsers,
     deleteUsers,
     updateUsers,
-    find
+    find,
+    login,
+    generateHash
 }

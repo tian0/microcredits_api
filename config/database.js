@@ -17,7 +17,7 @@ module.exports = {
 
         mongoose.connect(DB_CONNECTION) //opens connection to DB, was mongoose.connect(CONFIG.DB_CONNECTION), see line 2
             .then((connection) => {
-                console.log("CONNECTION", connection);
+                console.log("CONNECTION TO DB");
             })
             .catch((error) => {
                 console.log("ERROR", error);

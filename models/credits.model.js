@@ -7,12 +7,12 @@ let creditSchema = new Schema({
     usuario: {
         type: Schema.Types.ObjectId,
         required: true,
-        ref: "users"
+        ref: "User"
         // collection: User
     },
     solicitud: {
         type: Boolean,
-        required: true
+        default: true
     },
     fecha_solicitud: {
         type: Date,
